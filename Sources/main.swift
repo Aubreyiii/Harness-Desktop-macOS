@@ -80,8 +80,12 @@ final class HarnessService {
         request.timeoutInterval = 0.5
         let semaphore = DispatchSemaphore(value: 0)
         var healthy = false
-        let task = URLSession.shared.dataTask(with: request) { _, response, _ in
-            if let response = response as? HTTPURLResponse, response.statusCode == 200 {
+        let task = URLSession.shared.dataTask(with: request) { data, response, _ in
+            if let response = response as? HTTPURLResponse,
+               response.statusCode == 200,
+               let data,
+               let body = String(data: data, encoding: .utf8),
+               body.contains("window.__DSH_BOOT__") {
                 healthy = true
             }
             semaphore.signal()
@@ -93,26 +97,55 @@ final class HarnessService {
     }
 
     private func start() throws {
-        let home = FileManager.default.homeDirectoryForCurrentUser.path
+        let fileManager = FileManager.default
+        let homeURL = fileManager.homeDirectoryForCurrentUser
+        let home = homeURL.path
+        let resources = Bundle.main.resourceURL
+        let bundledNode = resources?.appendingPathComponent("runtime/bin/node")
+        let bundledDSH = resources?.appendingPathComponent("runtime/node_modules/@deepseek-ai/dsh/lib/bin.js")
+
+        if let bundledNode,
+           let bundledDSH,
+           fileManager.isExecutableFile(atPath: bundledNode.path),
+           fileManager.fileExists(atPath: bundledDSH.path) {
+            try launch(
+                executable: bundledNode,
+                arguments: [bundledDSH.path, "web", "--host", "127.0.0.1", "--port", "3080"],
+                homeURL: homeURL,
+                extraPath: bundledNode.deletingLastPathComponent().path
+            )
+            return
+        }
+
         let candidates = [
             "\(home)/.local/bin/dsh",
             "/opt/homebrew/bin/dsh",
             "/usr/local/bin/dsh"
         ]
-        guard let executable = candidates.first(where: { FileManager.default.isExecutableFile(atPath: $0) }) else {
+        guard let executable = candidates.first(where: { fileManager.isExecutableFile(atPath: $0) }) else {
             throw NSError(
                 domain: "HarnessDesktopApp",
                 code: 2,
-                userInfo: [NSLocalizedDescriptionKey: "找不到 dsh。预期位置：~/.local/bin/dsh"]
+                userInfo: [NSLocalizedDescriptionKey: "App 内未找到 Harness 运行时，且系统中没有可用的 dsh。请重新安装完整 DMG。"]
             )
         }
 
+        try launch(
+            executable: URL(fileURLWithPath: executable),
+            arguments: ["web", "--host", "127.0.0.1", "--port", "3080"],
+            homeURL: homeURL,
+            extraPath: URL(fileURLWithPath: executable).deletingLastPathComponent().path
+        )
+    }
+
+    private func launch(executable: URL, arguments: [String], homeURL: URL, extraPath: String) throws {
         let child = Process()
-        child.executableURL = URL(fileURLWithPath: executable)
-        child.arguments = ["web", "--host", "127.0.0.1", "--port", "3080"]
+        child.executableURL = executable
+        child.arguments = arguments
+        child.currentDirectoryURL = homeURL
         var environment = ProcessInfo.processInfo.environment
-        environment["HOME"] = home
-        environment["PATH"] = "\(home)/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+        environment["HOME"] = homeURL.path
+        environment["PATH"] = "\(extraPath):\(homeURL.path)/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
         child.environment = environment
         child.standardOutput = logHandle
         child.standardError = logHandle
