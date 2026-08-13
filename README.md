@@ -21,7 +21,7 @@
 ## 构建
 
 ```bash
-./build.sh
+bash build.sh
 ```
 
 产物：`build/Harness Desktop.app`
