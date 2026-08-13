@@ -3,3 +3,5 @@ build/
 DerivedData/
 *.xcuserstate
 *.xcworkspace/xcuserdata/
+*.dmg
+*.zip
