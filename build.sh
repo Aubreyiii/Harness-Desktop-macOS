@@ -9,6 +9,7 @@ MACOS="$CONTENTS/MacOS"
 RESOURCES="$CONTENTS/Resources"
 RUNTIME="$RESOURCES/runtime"
 CACHE="$BUILD/cache"
+RUNTIME_CACHE="$CACHE/runtime-${DSH_VERSION:-0.1.0-rc.6}-${ARCH:-$(uname -m)}"
 
 DSH_VERSION="${DSH_VERSION:-0.1.0-rc.6}"
 NODE_VERSION="${NODE_VERSION:-24.19.0}"
@@ -44,16 +45,21 @@ mkdir -p "$MACOS" "$RESOURCES" "$RUNTIME/bin"
   -o "$MACOS/HarnessDesktop"
 
 cp "$ROOT/Resources/Info.plist" "$CONTENTS/Info.plist"
+cp "$ROOT/Resources/AppIcon.icns" "$RESOURCES/AppIcon.icns"
 cp "$NODE_DIR/bin/node" "$RUNTIME/bin/node"
 
-PATH="$NODE_DIR/bin:/usr/bin:/bin:/usr/sbin:/sbin" \
-  "$NODE_DIR/bin/npm" install \
-  --prefix "$RUNTIME" \
-  --omit=dev \
-  --no-audit \
-  --no-fund \
-  --ignore-scripts=false \
-  "@deepseek-ai/dsh@$DSH_VERSION"
+if [[ ! -f "$RUNTIME_CACHE/node_modules/@deepseek-ai/dsh/lib/bin.js" ]]; then
+  mkdir -p "$RUNTIME_CACHE"
+  PATH="$NODE_DIR/bin:/usr/bin:/bin:/usr/sbin:/sbin" \
+    "$NODE_DIR/bin/npm" install \
+    --prefix "$RUNTIME_CACHE" \
+    --omit=dev \
+    --no-audit \
+    --no-fund \
+    --ignore-scripts=false \
+    "@deepseek-ai/dsh@$DSH_VERSION"
+fi
+/usr/bin/ditto "$RUNTIME_CACHE/node_modules" "$RUNTIME/node_modules"
 
 test -f "$RUNTIME/node_modules/@deepseek-ai/dsh/lib/bin.js"
 
