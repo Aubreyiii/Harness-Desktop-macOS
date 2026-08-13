@@ -1,10 +1,20 @@
 # Third-Party Notices
 
-Harness Desktop launches a separately installed `dsh` executable and displays its local Web UI. The upstream project is:
+Harness Desktop redistributes the following components in release builds:
 
-- `deepseek-harness` by Henry Zhang: https://github.com/HenryZ838978/deepseek-harness
-- Upstream license: MIT License
+## DeepSeek Harness
 
-The upstream software is not copied into or redistributed by this repository. Users install and use it separately under its own license.
+- Project: https://github.com/deepseek-ai/deepseek-harness
+- Package: `@deepseek-ai/dsh`
+- Version: `0.1.0-rc.6`
+- License: MIT License
 
-“DeepSeek” and related marks belong to their respective owners. Harness Desktop is an unofficial community wrapper and is not affiliated with, authorized by, or endorsed by DeepSeek or the upstream project author.
+## Node.js
+
+- Project: https://nodejs.org/
+- Version: 24.19.0
+- License: MIT License and licenses for bundled dependencies
+
+Release builds copy the full license texts for Node.js, Harness, and bundled npm dependencies into `Harness Desktop.app/Contents/Resources/licenses/`.
+
+“DeepSeek” and related marks belong to their respective owners. Harness Desktop is an unofficial community wrapper and is not affiliated with, authorized by, or endorsed by DeepSeek.
