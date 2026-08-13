@@ -37,6 +37,7 @@ rm -rf "$APP"
 mkdir -p "$MACOS" "$RESOURCES" "$RUNTIME/bin"
 
 /usr/bin/swiftc \
+  -target "${ARCH}-apple-macos13.0" \
   -parse-as-library \
   -O \
   -framework AppKit \
