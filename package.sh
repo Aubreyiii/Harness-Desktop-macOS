@@ -3,7 +3,7 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")" && pwd)"
 BUILD="$ROOT/build"
-VERSION="${VERSION:-0.2.1}"
+VERSION="${VERSION:-0.2.2}"
 ARCH="${ARCH:-$(uname -m)}"
 APP="$BUILD/Harness Desktop.app"
 STAGE="$BUILD/dmg-stage"
